@@ -1,0 +1,7 @@
+{
+  "name": "Agri IQ - Agricultural Examination Platform",
+  "description": "A production-ready examination platform for agricultural students featuring mock tests, manual UPI payments, and an advanced admin dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
