@@ -3,12 +3,24 @@ import { Button } from '../components/UI';
 
 interface LandingProps {
   onStart: () => void;
+  onAdminClick: () => void;
 }
 
-const Landing: React.FC<LandingProps> = ({ onStart }) => {
+const Landing: React.FC<LandingProps> = ({ onStart, onAdminClick }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center">
       <div className="w-full max-w-md flex-1 flex flex-col relative overflow-hidden">
+        {/* Subtle Admin Access */}
+        <button 
+          onClick={onAdminClick}
+          className="absolute top-6 right-6 z-50 p-3 bg-gray-50/50 rounded-2xl text-gray-300 hover:text-[#2D5A27] hover:bg-green-50 transition-all active:scale-90"
+          title="Admin Portal"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </button>
+
         <div className="absolute top-[-5%] right-[-5%] w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-60"></div>
         <div className="absolute bottom-[10%] left-[-10%] w-80 h-80 bg-orange-50 rounded-full blur-3xl opacity-40"></div>
         

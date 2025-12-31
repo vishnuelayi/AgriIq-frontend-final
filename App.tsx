@@ -19,50 +19,39 @@ const App: React.FC = () => {
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Initial Auth Check
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === '#/admin' && !user) {
-        setCurrentPage('admin_login');
-      } else if (hash === '' && currentPage === 'admin_login') {
-        setCurrentPage('landing');
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange();
-
     const checkAuth = async () => {
       const currentUser = api.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
         if (currentUser.role === UserRole.ADMIN) {
           setCurrentPage('admin_dashboard');
-        } else if (currentPage === 'landing' || currentPage === 'login') {
+        } else {
           setCurrentPage('home');
         }
       }
       setLoading(false);
     };
-    
     checkAuth();
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [user, currentPage]);
+  }, []);
 
+  // Handle Login Event
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
-    setCurrentPage(loggedInUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
-    if (window.location.hash === '#/admin') {
-      window.history.replaceState(null, '', ' ');
+    if (loggedInUser.role === UserRole.ADMIN) {
+      setCurrentPage('admin_dashboard');
+    } else {
+      setCurrentPage('home');
     }
   };
 
+  // Handle Logout Event
   const handleLogout = () => {
     api.logout();
     setUser(null);
     setActiveExamId(null);
     setCurrentPage('landing');
-    window.history.replaceState(null, '', ' ');
   };
 
   const startExam = (examId: string) => {
@@ -81,30 +70,30 @@ const App: React.FC = () => {
     );
   }
 
-  // Auth & Admin Logic
+  // 1. UNAUTHENTICATED FLOW
   if (!user) {
-    if (currentPage === 'admin_login') {
-      return (
-        <AdminLogin 
-          onLogin={handleLogin} 
-          onBack={() => {
-            window.location.hash = '';
-            setCurrentPage('landing');
-          }} 
-        />
-      );
+    switch (currentPage) {
+      case 'admin_login':
+        return <AdminLogin onLogin={handleLogin} onBack={() => setCurrentPage('landing')} />;
+      case 'login':
+        return <Login onLogin={handleLogin} />;
+      default:
+        return (
+          <Landing 
+            onStart={() => setCurrentPage('login')} 
+            onAdminClick={() => setCurrentPage('admin_login')}
+          />
+        );
     }
-    if (currentPage === 'landing') {
-      return <Landing onStart={() => setCurrentPage('login')} />;
-    }
-    return <Login onLogin={handleLogin} />;
   }
 
+  // 2. ADMIN FLOW
   if (user.role === UserRole.ADMIN) {
     return <AdminDashboard onLogout={handleLogout} />;
   }
 
-  // Special full-screen pages for Student (Exam & Results)
+  // 3. STUDENT FLOW
+  // Special Full-Screen Pages
   if (currentPage === 'exam_engine' && activeExamId) {
     return (
       <ExamEngine 
@@ -128,7 +117,7 @@ const App: React.FC = () => {
     );
   }
 
-  // Main Dashboard Shell (Home & MyExams)
+  // Dashboard Shell (Home & MyExams)
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center">
       <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col overflow-x-hidden">
@@ -149,7 +138,6 @@ const App: React.FC = () => {
           )}
         </main>
 
-        {/* Persistent Bottom Nav - Fixed within the container */}
         <nav className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-10 py-4 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
           <button 
             onClick={() => setCurrentPage('home')} 

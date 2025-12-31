@@ -82,7 +82,42 @@ class ApiService {
     return exams.find(e => e.id === id);
   }
 
+  async createExamWithQuestions(examData: Omit<Exam, 'id' | 'questionIds'>, questions: Omit<Question, 'id'>[]): Promise<Exam> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const allQuestions = this._get<Question[]>(STORAGE_KEYS.QUESTIONS, []);
+        const allExams = this._get<Exam[]>(STORAGE_KEYS.EXAMS, []);
+
+        // Create Questions
+        const newQuestions: Question[] = questions.map(q => ({
+          ...q,
+          id: 'q_' + Math.random().toString(36).substr(2, 9)
+        }));
+
+        this._set(STORAGE_KEYS.QUESTIONS, [...allQuestions, ...newQuestions]);
+
+        // Create Exam
+        const newExam: Exam = {
+          ...examData,
+          id: 'exam_' + Date.now(),
+          questionIds: newQuestions.map(q => q.id)
+        };
+
+        this._set(STORAGE_KEYS.EXAMS, [...allExams, newExam]);
+        resolve(newExam);
+      }, 800);
+    });
+  }
+
   // QUESTIONS
+  async getAllQuestions(): Promise<Question[]> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(this._get<Question[]>(STORAGE_KEYS.QUESTIONS, []));
+      }, 300);
+    });
+  }
+
   async getQuestionsByIds(ids: string[]): Promise<Question[]> {
     return new Promise((resolve) => {
       setTimeout(() => {
