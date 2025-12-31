@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'danger' }> = ({ 
@@ -48,3 +47,28 @@ export const Badge: React.FC<{ children: React.ReactNode; color?: 'green' | 'blu
     </span>
   );
 };
+
+// --- Skeleton Components ---
+
+export const Skeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
+  <div className={`animate-pulse bg-gray-200 rounded-lg relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent ${className}`}></div>
+);
+
+export const ExamCardSkeleton: React.FC = () => (
+  <Card className="p-6 border-none shadow-lg">
+    <div className="flex justify-between items-start mb-4">
+      <Skeleton className="w-20 h-6 rounded-full" />
+      <Skeleton className="w-16 h-3 rounded-full" />
+    </div>
+    <Skeleton className="w-3/4 h-6 mb-3 rounded-md" />
+    <div className="space-y-2 mb-6">
+      <Skeleton className="w-full h-3 rounded-sm" />
+      <Skeleton className="w-5/6 h-3 rounded-sm" />
+    </div>
+    <div className="flex items-center gap-4 mb-6">
+      <Skeleton className="w-16 h-4 rounded-md" />
+      <Skeleton className="w-16 h-4 rounded-md" />
+    </div>
+    <Skeleton className="w-full h-12 rounded-xl" />
+  </Card>
+);

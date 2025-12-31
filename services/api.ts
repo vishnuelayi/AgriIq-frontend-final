@@ -1,8 +1,6 @@
-
 import { Exam, Question, User, UserRole, PaymentRequest, PaymentStatus, ExamAttempt } from '../types';
 import { mockExams, mockQuestions, mockUser, mockAdmin, ADMIN_CREDENTIALS } from './mockData';
 
-// Simulated persistence using LocalStorage
 const STORAGE_KEYS = {
   USERS: 'agriiq_users',
   EXAMS: 'agriiq_exams',
@@ -13,45 +11,49 @@ const STORAGE_KEYS = {
 };
 
 class ApiService {
-  private get<T>(key: string, defaultValue: T): T {
+  private _get<T>(key: string, defaultValue: T): T {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : defaultValue;
   }
 
-  private set<T>(key: string, value: T): void {
+  private _set<T>(key: string, value: T): void {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
   constructor() {
-    if (!localStorage.getItem(STORAGE_KEYS.EXAMS)) this.set(STORAGE_KEYS.EXAMS, mockExams);
-    if (!localStorage.getItem(STORAGE_KEYS.QUESTIONS)) this.set(STORAGE_KEYS.QUESTIONS, mockQuestions);
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) this.set(STORAGE_KEYS.USERS, [mockUser, mockAdmin]);
+    if (!localStorage.getItem(STORAGE_KEYS.EXAMS)) this._set(STORAGE_KEYS.EXAMS, mockExams);
+    if (!localStorage.getItem(STORAGE_KEYS.QUESTIONS)) this._set(STORAGE_KEYS.QUESTIONS, mockQuestions);
+    if (!localStorage.getItem(STORAGE_KEYS.USERS)) this._set(STORAGE_KEYS.USERS, [mockUser, mockAdmin]);
   }
 
   // AUTH
   async login(phone: string): Promise<User> {
-    const users = this.get<User[]>(STORAGE_KEYS.USERS, []);
-    let user = users.find(u => u.phoneNumber === phone);
-    if (!user) {
-      user = {
-        id: 'u_' + Date.now(),
-        phoneNumber: phone,
-        fullName: 'New Student',
-        role: UserRole.STUDENT,
-        blocked: false,
-        createdAt: Date.now()
-      };
-      this.set(STORAGE_KEYS.USERS, [...users, user]);
-    }
-    this.set(STORAGE_KEYS.CURRENT_USER, user);
-    return user;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const users = this._get<User[]>(STORAGE_KEYS.USERS, []);
+        let user = users.find(u => u.phoneNumber === phone);
+        if (!user) {
+          user = {
+            id: 'u_' + Date.now(),
+            phoneNumber: phone,
+            fullName: 'Student_' + Math.floor(Math.random() * 1000),
+            role: UserRole.STUDENT,
+            blocked: false,
+            createdAt: Date.now()
+          };
+          this._set(STORAGE_KEYS.USERS, [...users, user]);
+        }
+        this._set(STORAGE_KEYS.CURRENT_USER, user);
+        resolve(user);
+      }, 500);
+    });
   }
 
   async adminLogin(username: string, password: string): Promise<User> {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-          this.set(STORAGE_KEYS.CURRENT_USER, mockAdmin);
+          this._set(STORAGE_KEYS.CURRENT_USER, mockAdmin);
           resolve(mockAdmin);
         } else {
           reject(new Error("Invalid credentials"));
@@ -61,73 +63,95 @@ class ApiService {
   }
 
   getCurrentUser(): User | null {
-    return this.get<User | null>(STORAGE_KEYS.CURRENT_USER, null);
+    return this._get<User | null>(STORAGE_KEYS.CURRENT_USER, null);
   }
 
-  logout() {
+  logout(): void {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
   }
 
   // EXAMS
   async getExams(): Promise<Exam[]> {
-    return this.get<Exam[]>(STORAGE_KEYS.EXAMS, []);
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(this._get<Exam[]>(STORAGE_KEYS.EXAMS, [])), 300);
+    });
   }
 
   async getExamById(id: string): Promise<Exam | undefined> {
-    return (await this.getExams()).find(e => e.id === id);
+    const exams = await this.getExams();
+    return exams.find(e => e.id === id);
   }
 
   // QUESTIONS
   async getQuestionsByIds(ids: string[]): Promise<Question[]> {
-    const all = this.get<Question[]>(STORAGE_KEYS.QUESTIONS, []);
-    return all.filter(q => ids.includes(q.id));
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const all = this._get<Question[]>(STORAGE_KEYS.QUESTIONS, []);
+        resolve(all.filter(q => ids.includes(q.id)));
+      }, 300);
+    });
   }
 
   // PAYMENTS
   async submitPayment(payment: Omit<PaymentRequest, 'id' | 'status' | 'createdAt'>): Promise<PaymentRequest> {
-    const payments = this.get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
-    const newPayment: PaymentRequest = {
-      ...payment,
-      id: 'p_' + Date.now(),
-      status: PaymentStatus.PENDING,
-      createdAt: Date.now()
-    };
-    this.set(STORAGE_KEYS.PAYMENTS, [...payments, newPayment]);
-    return newPayment;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const payments = this._get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
+        const newPayment: PaymentRequest = {
+          ...payment,
+          id: 'p_' + Date.now(),
+          status: PaymentStatus.PENDING,
+          createdAt: Date.now()
+        };
+        this._set(STORAGE_KEYS.PAYMENTS, [...payments, newPayment]);
+        resolve(newPayment);
+      }, 600);
+    });
   }
 
   async getMyPayments(userId: string): Promise<PaymentRequest[]> {
-    return this.get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []).filter(p => p.userId === userId);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const all = this._get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
+        resolve(all.filter(p => p.userId === userId));
+      }, 300);
+    });
   }
 
   async getAllPayments(): Promise<PaymentRequest[]> {
-    return this.get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
+    return this._get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
   }
 
   async updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<void> {
-    const payments = this.get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
+    const payments = this._get<PaymentRequest[]>(STORAGE_KEYS.PAYMENTS, []);
     const updated = payments.map(p => p.id === paymentId ? { ...p, status } : p);
-    this.set(STORAGE_KEYS.PAYMENTS, updated);
+    this._set(STORAGE_KEYS.PAYMENTS, updated);
   }
 
   // ATTEMPTS
   async saveAttempt(attempt: ExamAttempt): Promise<void> {
-    const attempts = this.get<ExamAttempt[]>(STORAGE_KEYS.ATTEMPTS, []);
-    const existing = attempts.findIndex(a => a.userId === attempt.userId && a.examId === attempt.examId);
-    if (existing > -1) {
-      attempts[existing] = attempt;
-      this.set(STORAGE_KEYS.ATTEMPTS, attempts);
-    } else {
-      this.set(STORAGE_KEYS.ATTEMPTS, [...attempts, attempt]);
-    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const attempts = this._get<ExamAttempt[]>(STORAGE_KEYS.ATTEMPTS, []);
+        const existingIdx = attempts.findIndex(a => a.userId === attempt.userId && a.examId === attempt.examId);
+        if (existingIdx > -1) {
+          attempts[existingIdx] = attempt;
+          this._set(STORAGE_KEYS.ATTEMPTS, attempts);
+        } else {
+          this._set(STORAGE_KEYS.ATTEMPTS, [...attempts, attempt]);
+        }
+        resolve();
+      }, 400);
+    });
   }
 
   async getAttempt(userId: string, examId: string): Promise<ExamAttempt | undefined> {
-    return this.get<ExamAttempt[]>(STORAGE_KEYS.ATTEMPTS, []).find(a => a.userId === userId && a.examId === examId);
-  }
-
-  async getAllAttempts(): Promise<ExamAttempt[]> {
-    return this.get<ExamAttempt[]>(STORAGE_KEYS.ATTEMPTS, []);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const all = this._get<ExamAttempt[]>(STORAGE_KEYS.ATTEMPTS, []);
+        resolve(all.find(a => a.userId === userId && a.examId === examId));
+      }, 300);
+    });
   }
 }
 

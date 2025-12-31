@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from './types';
 import { api } from './services/api';
@@ -20,7 +19,6 @@ const App: React.FC = () => {
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen for hash changes to support "special route" for admin
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -32,22 +30,28 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Check initial hash
+    handleHashChange();
 
-    const currentUser = api.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setCurrentPage(currentUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
-    }
-
-    setLoading(false);
+    const checkAuth = async () => {
+      const currentUser = api.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        if (currentUser.role === UserRole.ADMIN) {
+          setCurrentPage('admin_dashboard');
+        } else if (currentPage === 'landing' || currentPage === 'login') {
+          setCurrentPage('home');
+        }
+      }
+      setLoading(false);
+    };
+    
+    checkAuth();
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [user]);
+  }, [user, currentPage]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
     setCurrentPage(loggedInUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
-    // Clear hash if we were on admin login
     if (window.location.hash === '#/admin') {
       window.history.replaceState(null, '', ' ');
     }
@@ -56,6 +60,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     api.logout();
     setUser(null);
+    setActiveExamId(null);
     setCurrentPage('landing');
     window.history.replaceState(null, '', ' ');
   };
@@ -70,13 +75,13 @@ const App: React.FC = () => {
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-[#2D5A27] border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-500 font-medium">Harvesting Knowledge...</p>
+          <p className="mt-4 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Harvesting Knowledge...</p>
         </div>
       </div>
     );
   }
 
-  // Handle flow for non-authenticated users
+  // Auth & Admin Logic
   if (!user) {
     if (currentPage === 'admin_login') {
       return (
@@ -95,25 +100,39 @@ const App: React.FC = () => {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Admin View
   if (user.role === UserRole.ADMIN) {
     return <AdminDashboard onLogout={handleLogout} />;
   }
 
-  // Student Views that shouldn't have the bottom nav
+  // Special full-screen pages for Student (Exam & Results)
   if (currentPage === 'exam_engine' && activeExamId) {
-    return <ExamEngine examId={activeExamId} user={user} onFinish={() => setCurrentPage('results')} />;
+    return (
+      <ExamEngine 
+        examId={activeExamId} 
+        user={user} 
+        onFinish={() => setCurrentPage('results')} 
+      />
+    );
   }
 
   if (currentPage === 'results' && activeExamId) {
-    return <Results examId={activeExamId} user={user} onBack={() => setCurrentPage('home')} />;
+    return (
+      <Results 
+        examId={activeExamId} 
+        user={user} 
+        onBack={() => {
+          setActiveExamId(null);
+          setCurrentPage('home');
+        }} 
+      />
+    );
   }
 
-  // Standard Student Layout for Home and My Exams
+  // Main Dashboard Shell (Home & MyExams)
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-      <div className="w-full max-w-lg bg-white min-h-screen shadow-xl relative flex flex-col overflow-y-auto no-scrollbar">
-        <main className="flex-1 pb-24">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center">
+      <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col overflow-x-hidden">
+        <main className="flex-1 pb-24 overflow-y-auto no-scrollbar">
           {currentPage === 'home' ? (
             <StudentHome 
               user={user} 
@@ -130,20 +149,23 @@ const App: React.FC = () => {
           )}
         </main>
 
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-100 px-12 py-3 flex justify-around items-center z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        {/* Persistent Bottom Nav - Fixed within the container */}
+        <nav className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-10 py-4 flex justify-around items-center z-40 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
           <button 
             onClick={() => setCurrentPage('home')} 
-            className={`flex flex-col items-center transition-colors ${currentPage === 'home' ? 'text-[#2D5A27]' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition-all ${currentPage === 'home' ? 'text-[#2D5A27] scale-110' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <Icons.Home />
-            <span className="text-[10px] font-bold mt-1 uppercase">Home</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
+            {currentPage === 'home' && <div className="w-1 h-1 bg-[#2D5A27] rounded-full"></div>}
           </button>
           <button 
             onClick={() => setCurrentPage('my_exams')} 
-            className={`flex flex-col items-center transition-colors ${currentPage === 'my_exams' ? 'text-[#2D5A27]' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition-all ${currentPage === 'my_exams' ? 'text-[#2D5A27] scale-110' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <Icons.Exams />
-            <span className="text-[10px] font-bold mt-1 uppercase">My Tests</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">My Tests</span>
+            {currentPage === 'my_exams' && <div className="w-1 h-1 bg-[#2D5A27] rounded-full"></div>}
           </button>
         </nav>
       </div>
