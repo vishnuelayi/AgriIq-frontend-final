@@ -13,11 +13,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState(1); // 1: Phone, 2: OTP
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length < 10) return;
     setLoading(true);
+    setError(null);
     setTimeout(() => {
       setStep(2);
       setLoading(false);
@@ -27,11 +29,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const user = await api.login(phone);
       onLogin(user);
     } catch (err) {
-      alert("Invalid OTP");
+      setError("Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -40,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col p-6 items-center justify-center">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-12">
           <div className="w-20 h-20 bg-[#2D5A27] rounded-3xl flex items-center justify-center shadow-2xl shadow-green-200 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -51,6 +54,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         <Card className="p-8 border-none shadow-xl bg-gray-50/50">
+          <h2 className="text-lg font-bold text-gray-800 mb-6">Student Login</h2>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 text-center">
+              {error}
+            </div>
+          )}
+
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-6">
               <div>
@@ -83,7 +94,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   onChange={(e) => setOtp(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-2">Sent to {phone} <button type="button" onClick={() => setStep(1)} className="text-[#2D5A27] font-bold">Edit</button></p>
+                <p className="text-xs text-gray-500 mt-2">Sent to {phone} <button type="button" onClick={() => setStep(1)} className="text-[#2D5A27] font-bold underline">Edit</button></p>
               </div>
               <Button type="submit" className="w-full" disabled={otp.length < 4 || loading}>
                 {loading ? 'Verifying...' : 'Login Now'}
@@ -93,8 +104,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </Card>
 
         <p className="text-center text-gray-400 text-sm mt-12">
-          By continuing, you agree to our <br/>
-          <span className="font-semibold text-gray-600 underline">Terms of Service</span> and <span className="font-semibold text-gray-600 underline">Privacy Policy</span>
+          Join thousands of agricultural toppers today.
         </p>
       </div>
     </div>

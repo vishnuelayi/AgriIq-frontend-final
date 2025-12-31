@@ -121,7 +121,6 @@ const Results: React.FC<ResultsProps> = ({ examId, user, onBack }) => {
 
       <div className="px-6 mt-10 flex flex-col gap-3">
         <Button onClick={onBack} className="w-full">Back to Home</Button>
-        <Button variant="outline" className="w-full" onClick={() => window.print()}>Download PDF Report</Button>
       </div>
     </div>
   );

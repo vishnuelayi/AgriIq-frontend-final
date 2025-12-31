@@ -7,6 +7,7 @@ import { Icons } from './constants';
 // Pages
 import Landing from './pages/Landing';
 import Login from './pages/Auth/Login';
+import AdminLogin from './pages/Admin/AdminLogin';
 import StudentHome from './pages/Student/Home';
 import ExamEngine from './pages/Student/ExamEngine';
 import Results from './pages/Student/Results';
@@ -19,26 +20,44 @@ const App: React.FC = () => {
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Listen for hash changes to support "special route" for admin
   useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#/admin' && !user) {
+        setCurrentPage('admin_login');
+      } else if (hash === '' && currentPage === 'admin_login') {
+        setCurrentPage('landing');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Check initial hash
+
     const currentUser = api.getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
       setCurrentPage(currentUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
-    } else {
-      setCurrentPage('landing');
     }
+
     setLoading(false);
-  }, []);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [user]);
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser);
     setCurrentPage(loggedInUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
+    // Clear hash if we were on admin login
+    if (window.location.hash === '#/admin') {
+      window.history.replaceState(null, '', ' ');
+    }
   };
 
   const handleLogout = () => {
     api.logout();
     setUser(null);
     setCurrentPage('landing');
+    window.history.replaceState(null, '', ' ');
   };
 
   const startExam = (examId: string) => {
@@ -59,6 +78,17 @@ const App: React.FC = () => {
 
   // Handle flow for non-authenticated users
   if (!user) {
+    if (currentPage === 'admin_login') {
+      return (
+        <AdminLogin 
+          onLogin={handleLogin} 
+          onBack={() => {
+            window.location.hash = '';
+            setCurrentPage('landing');
+          }} 
+        />
+      );
+    }
     if (currentPage === 'landing') {
       return <Landing onStart={() => setCurrentPage('login')} />;
     }
@@ -82,7 +112,6 @@ const App: React.FC = () => {
   // Standard Student Layout for Home and My Exams
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-      {/* Fixed-width container for the mobile app feel */}
       <div className="w-full max-w-lg bg-white min-h-screen shadow-xl relative flex flex-col overflow-y-auto no-scrollbar">
         <main className="flex-1 pb-24">
           {currentPage === 'home' ? (
@@ -101,7 +130,6 @@ const App: React.FC = () => {
           )}
         </main>
 
-        {/* Unified Bottom Navigation */}
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-100 px-12 py-3 flex justify-around items-center z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
           <button 
             onClick={() => setCurrentPage('home')} 

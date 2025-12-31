@@ -71,8 +71,13 @@ export const mockUser: User = {
 export const mockAdmin: User = {
   id: 'admin1',
   phoneNumber: '+910000000000',
-  fullName: 'Admin User',
+  fullName: 'Super Admin',
   role: UserRole.ADMIN,
   blocked: false,
   createdAt: Date.now(),
+};
+
+export const ADMIN_CREDENTIALS = {
+  username: 'admin',
+  password: 'password123'
 };

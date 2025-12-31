@@ -1,6 +1,6 @@
 
 import { Exam, Question, User, UserRole, PaymentRequest, PaymentStatus, ExamAttempt } from '../types';
-import { mockExams, mockQuestions, mockUser, mockAdmin } from './mockData';
+import { mockExams, mockQuestions, mockUser, mockAdmin, ADMIN_CREDENTIALS } from './mockData';
 
 // Simulated persistence using LocalStorage
 const STORAGE_KEYS = {
@@ -45,6 +45,19 @@ class ApiService {
     }
     this.set(STORAGE_KEYS.CURRENT_USER, user);
     return user;
+  }
+
+  async adminLogin(username: string, password: string): Promise<User> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+          this.set(STORAGE_KEYS.CURRENT_USER, mockAdmin);
+          resolve(mockAdmin);
+        } else {
+          reject(new Error("Invalid credentials"));
+        }
+      }, 800);
+    });
   }
 
   getCurrentUser(): User | null {
