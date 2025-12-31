@@ -13,6 +13,22 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none; /* Disable text selection for exam security */
         }
+
+        /* 
+           Global Scrollbar Hiding 
+           Hides scrollbars on all elements (*) for a seamless app-like feel
+           while allowing content to remain scrollable.
+        */
+        * {
+            -ms-overflow-style: none;  /* Internet Explorer and Edge */
+            scrollbar-width: none;     /* Firefox */
+        }
+        
+        *::-webkit-scrollbar {
+            display: none;             /* Chrome, Safari and Opera */
+        }
+
+        /* Specific utility classes for legacy support */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }

@@ -5,6 +5,7 @@ import { api } from './services/api';
 import { Icons } from './constants';
 
 // Pages
+import Landing from './pages/Landing';
 import Login from './pages/Auth/Login';
 import StudentHome from './pages/Student/Home';
 import ExamEngine from './pages/Student/ExamEngine';
@@ -14,7 +15,7 @@ import MyExams from './pages/Student/MyExams';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const [currentPage, setCurrentPage] = useState<string>('landing');
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,9 +23,9 @@ const App: React.FC = () => {
     const currentUser = api.getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
-      if (currentUser.role === UserRole.ADMIN) {
-        setCurrentPage('admin_dashboard');
-      }
+      setCurrentPage(currentUser.role === UserRole.ADMIN ? 'admin_dashboard' : 'home');
+    } else {
+      setCurrentPage('landing');
     }
     setLoading(false);
   }, []);
@@ -37,7 +38,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     api.logout();
     setUser(null);
-    setCurrentPage('login');
+    setCurrentPage('landing');
   };
 
   const startExam = (examId: string) => {
@@ -56,7 +57,13 @@ const App: React.FC = () => {
     );
   }
 
-  if (!user) return <Login onLogin={handleLogin} />;
+  // Handle flow for non-authenticated users
+  if (!user) {
+    if (currentPage === 'landing') {
+      return <Landing onStart={() => setCurrentPage('login')} />;
+    }
+    return <Login onLogin={handleLogin} />;
+  }
 
   // Admin View
   if (user.role === UserRole.ADMIN) {
